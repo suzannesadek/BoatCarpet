@@ -266,7 +266,11 @@ select,input[type=text],input[type=email],input[type=tel],textarea{padding:7px 1
   max-width: 100%;
   min-height: 0 !important;   /* ← ADD THIS LINE */
 }
-
+/* Allow the Avada 100%-height section to grow with content */
+.hundred-percent-height.fusion-fullwidth {
+  overflow: visible !important;
+  height: auto !important;
+}
 .layout > .main {
   flex: 7 1 0;
   min-width: 340px;
