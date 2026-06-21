@@ -259,19 +259,22 @@ select,input[type=text],input[type=email],input[type=tel],textarea{padding:7px 1
 .rv-edit-btn{font-size:11px;font-weight:600;color:var(--blue);background:none;border:1px solid var(--blue);padding:4px 12px;border-radius:5px;cursor:pointer;white-space:nowrap;}
 .rv-edit-btn:hover{background:var(--sel-bg);}
 /* === Avada embed fixes === */
-.layout{
-  display:flex;
-  flex-wrap:wrap;
-  align-items:flex-start;
-  max-width:100%;
+.layout {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  max-width: 100%;
+  min-height: 0 !important;   /* ← ADD THIS LINE */
 }
-.layout > .main{
-  flex:7 1 0;       /* 70% share when side-by-side */
-  min-width:340px;  /* stacks below this width instead of overflowing */
+
+.layout > .main {
+  flex: 7 1 0;
+  min-width: 340px;
 }
-.layout > .sidebar{
-  flex:3 1 0;       /* 30% share */
-  min-width:260px;
+
+.layout > .sidebar {
+  flex: 3 1 0;
+  min-width: 260px;
 }
 header,.step-tabs{max-width:100%}
 .main img,.sidebar img,#pattern-img-wrap img,#sb-pattern-canvas{
