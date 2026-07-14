@@ -28,12 +28,15 @@ header{background:var(--navy);color:#fff;padding:0 24px;height:54px;display:flex
 .st.active{border-bottom-color:var(--gold)}
 .st.done .snum{background:var(--green);color:#fff}
 .st.done .slabel{color:var(--green)}
+
 .layout{display:grid;grid-template-columns:1fr 280px;min-height:calc(100vh - 120px)}
 .main{padding:12px 16px 20px;border-right:1px solid var(--border)}
 .sidebar{background:#fff;padding:18px 20px;align-self:start}
+#yr-help{ display:none !important; }
 #make-logo-wrap{text-align:center;padding:5px 14px;min-height:40px;display:flex;align-items:center;justify-content:center;background:#ffffff;border:2px solid #dee2e6;border-radius:8px;margin-bottom:10px;}
 #make-logo{max-height:45px;max-width:180px;object-fit:contain;opacity:0;transition:opacity 0.35s ease;}
 #make-logo.visible{opacity:1;}
+#yr-help{ display:none !important; }
 @media(max-width:820px){.layout{grid-template-columns:1fr}.sidebar{border-top:1px solid var(--border);position:static}}
 .panel{display:none}.panel.active{display:block}
 .sec-lbl{font-size:17px;font-weight:700;letter-spacing:0;text-transform:none;color:#1a2b3c;margin-bottom:2px}
@@ -188,8 +191,17 @@ hr.div{border:none;border-top:1px solid var(--border);margin:16px 0;}
 .pl-item:last-child{border-bottom:none;}
 .plchk{width:20px;height:20px;border-radius:50%;background:var(--navy);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .plchk svg{width:11px;height:11px;fill:#fff;}
-.nopat{background:#fffcec;border:1.5px solid #f0c040;border-radius:8px;padding:14px 16px;margin-top:24px;}
-.nopat h3{font-size:13px;font-weight:700;color:#6b4800;margin:0 0 6px 0;}
+.nopat{
+  background:#f7f9fb;
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:14px 16px;
+  margin-top:24px;
+  display:none;               /* hidden until a stuck-signal fires */
+}
+.nopat.is-visible{ display:block; animation:nopatIn .25s ease; }
+@keyframes nopatIn{ from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:none} }
+.nopat h3{ font-size:13px;font-weight:700;color:#1a2b3c;margin:0 0 6px 0; }
 .nopat-form-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
 .nopat-form-row.full{grid-template-columns:1fr;}
 .nopat label{display:block;font-size:11px;font-weight:600;color:#5a4300;margin-bottom:2px;}
@@ -341,7 +353,7 @@ header,.step-tabs{max-width:100%}
           <option>Tiara</option>
           <option>Wellcraft</option>
           <option>Yamaha</option>
-          <option value="other">Other / Not Listed</option>
+<option value="other" style="color:#c0392b;font-weight:600;">Other / Not Listed</option>
         </select></div>
       <div><label>Model</label>
         <select id="model" onchange="updModelYears()"><option value="">— Model —</option></select>
@@ -432,7 +444,7 @@ header,.step-tabs{max-width:100%}
   </div>
 
   <div class="nav-bar"><div></div><button class="btn-nav bnp" onclick="go(1)">Next: Choose Pieces →</button></div>
-    <div style="margin:50px 0 0;display:flex;align-items:center;gap:14px;">
+   <div id="nopat-divider" style="margin:50px 0 0;display:flex;align-items:center;gap:14px;display:none;">
       <div style="flex:1;border-top:1px solid var(--border);"></div>
       <div style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);white-space:nowrap;">Don't See Your Pattern? — boat lookup help</div>
       <div style="flex:1;border-top:1px solid var(--border);"></div>
@@ -2671,7 +2683,8 @@ const SVG_DEFS={/* v10.23 - brand year fixes pt2 modal for Business Tools button
   "Hurricane|Sundeck 217":{
     svg:'',
     pieces:[
-      {id:"cockpit", svgId:"", name:"Cockpit Carpet",  desc:"One-piece full cockpit", sf:40, numPos:{x:45,y:45}}
+      {id:"bow", svgId:"", name:"Bow Carpet", desc:"Forward bow section", sf:22, numPos:{x:45,y:20}},
+      {id:"cockpit", svgId:"", name:"Cockpit Carpet",  desc:"One-piece full cockpit", sf:42, numPos:{x:45,y:45}}
     ]
   },
   "Hurricane|218 Fundeck":{
@@ -6034,5 +6047,62 @@ function fallbackCopy(txt){
     <button onclick="submitQuoteModal()" style="width:100%;padding:12px;background:#1a2e44;color:#fff;border:none;border-radius:7px;font-size:15px;font-weight:600;cursor:pointer;">Send My Quote Request</button>
   </div>
 </div>
+
+<script>
+(function(){
+  var box     = document.getElementById('nopat');
+  var divider = document.getElementById('nopat-divider');
+  var make    = document.getElementById('make');
+  var model   = document.getElementById('model');
+  var year    = document.getElementById('year');
+  if(!box || !make) return;
+
+  var revealed = false, modelTimer = null, idleTimer = null;
+
+  function track(evt, data){
+    try{
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push(Object.assign({event: evt}, data||{}));
+      if(typeof window.gtag === 'function'){ window.gtag('event', evt, data||{}); }
+    }catch(e){}
+  }
+  function reveal(reason){
+    if(revealed) return;
+    revealed = true;
+    box.classList.add('is-visible');
+    if(divider){ divider.style.display = 'flex'; }
+    track('nopat_shown', {reason: reason});
+  }
+  function hide(reason){
+    box.classList.remove('is-visible');
+    if(divider){ divider.style.display = 'none'; }
+    clearTimeout(modelTimer); clearTimeout(idleTimer);
+    if(revealed){ track('nopat_hidden', {reason: reason}); }
+    revealed = false;
+  }
+
+  make.addEventListener('change', function(){
+    track('step1_make_selected', {make: make.value});
+    clearTimeout(modelTimer); clearTimeout(idleTimer);
+    if(make.value === 'other'){ reveal('other_selected'); return; }
+    if(make.value){
+      modelTimer = setTimeout(function(){ if(!model.value) reveal('make_no_model'); }, 8000);
+    } else { hide('make_cleared'); }
+  });
+  model.addEventListener('change', function(){
+    if(model.value){ track('step1_model_selected', {model: model.value}); hide('model_selected'); }
+  });
+  if(year){ year.addEventListener('change', function(){ if(year.value) track('step1_year_selected', {year: year.value}); }); }
+
+  function armIdle(){
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(function(){ if(!(model && model.value)) reveal('inactivity'); }, 25000);
+  }
+  ['click','change','keydown'].forEach(function(ev){
+    document.addEventListener(ev, function(){ if(!revealed) armIdle(); }, true);
+  });
+  armIdle();
+})();
+</script>
 </body>
 </html>
